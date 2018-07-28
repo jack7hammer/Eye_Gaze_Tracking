@@ -14,13 +14,7 @@ gausempt=cv2.resize(gausempt,(100,45))
 
 
 cap=cv2.VideoCapture(0)
-kernel = np.ones((1,1), np.uint8)
 
-def checkdirection(eyes):
-	mask = np.zeros(image_array.shape, dtype=np.uint8)
-	cv2.circle(mask, max_loc, circle_radius, (255, 255, 255), -1, 8, 0)
-	result_array=image_array & mask
-	result_array=result_array[max_loc[1]-circle_radius:max_loc[1]+circle_radius]
 
 
 
