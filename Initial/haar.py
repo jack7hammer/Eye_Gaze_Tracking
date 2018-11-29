@@ -8,10 +8,24 @@ import sigmoid as sig
 import win32api
 import pyautogui
 import time
-
+import caltest as callt
+import winsound
 
 #import mouse
+left_syn0=[[]]
+left_syn1=[[]]
+left_b=0
+left_s=[]
+left_u=[]
+right_syn0=[[]]
+right_syn1=[[]]
+right_b=0
+right_s=[]
+right_u=[]
 
+
+s=0
+f=0
 #Pre trained calssifiers for face and eyes
 face_cascade=cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade=cv2.CascadeClassifier('haarcascade_eye.xml')
@@ -32,6 +46,8 @@ eye_coordinates_left=[]
 eye_coordinates_right=[]
 
 callibration=True
+eye_coordinates_left_length=0
+eye_coordinates_right_length=0
 
 global state_left
 state_left = win32api.GetKeyState(0x01)
@@ -44,14 +60,28 @@ def centroid(cnt,txt):
 
 	#centroid y coordinate
 	cy=int(m['m01']/m['m00'])
-	#print(txt,"= ",cx,",",cy)
+	
 	return cx,cy
 
 	
+def DisplayWarning(text):
+	print("\n\n\n\n \t\t\t WARNING",text)
+	winsound.Beep(2500,500)
 
 
 
 def eyes():
+
+	global left_syn0
+	global right_syn0
+	global left_syn1
+	global right_syn1
+	global left_b
+	global right_b
+	global left_s
+	global right_s 
+	global left_u
+	global right_u
 
 	while True:
 
@@ -64,7 +94,20 @@ def eyes():
 
 		faces=face_cascade.detectMultiScale(gray,1.3,2)
 		#face
+		global f
+		if len(faces)==0 and f==0:
+			f=time.time()
+		if len(faces)==0:
+			y=time.time()-f
+			if y>2 :
+				DisplayWarning("FACE NOT FOUND")
+		if len(faces)!=0:
+			f=0
+			
+
+
 		for (x,y,w,h) in faces:
+
 	        #whole of the face
 			cropped=frame[y:y+h,x:x+w]
 			frame=cv2.rectangle(frame,(x,y),(x+w,y+h),(255,255,255),1)
@@ -87,7 +130,7 @@ def eyes():
 				cv2.rectangle(roi_color2,(ex1,ey1),(ex1+ew1,ey1+eh1),(255,255,255),1)
 
 				#thresholding the left eye
-				gaus2=cv2.adaptiveThreshold(cropgray2,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,105,7)
+				gaus2=cv2.adaptiveThreshold(cropgray2,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,55,10)
 				gaus2_copy=gaus2.copy()
 				gaus2_inv=cv2.bitwise_not(gaus2_copy)
 				gaus2_closing=cv2.morphologyEx(gaus2_inv,cv2.MORPH_CLOSE,kernel)
@@ -97,7 +140,7 @@ def eyes():
 
 				#gaus2_blur = cv2.GaussianBlur(gaus2_inv,(5,5),0 )
 				#flipping the image so we get a mirror image
-				gaus2=cv2.flip(gaus2,1)
+				gaus2=cv2.flip(gaus2_opening,1)
 				
 
 				#resizing the image to a fixed dimensions
@@ -125,13 +168,13 @@ def eyes():
 			for (ex,ey,ew,eh) in eye_right :
 
 				#cropping the right eye
-				cropped2=cropped[ey+int(eh/2.3):ey+eh-int(eh/4),ex:ex+ew]
+				cropped2=cropped[ey+int(eh/2.3):ey+eh-int(eh/4),ex+int(ex/5):ex+ew-int(ex/5)]
 				cropgray=cv2.cvtColor(cropped2,cv2.COLOR_BGR2GRAY)
 				cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(255,255,255),1)
 
 
 				#thresholdig the right eye image
-				gaus=cv2.adaptiveThreshold(cropgray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,55,7)
+				gaus=cv2.adaptiveThreshold(cropgray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,55,10)
 				gaus_copy=gaus.copy()
 				gaus_inv=cv2.bitwise_not(gaus_copy)
 
@@ -143,7 +186,7 @@ def eyes():
 				#gaus_blur=cv2.GaussianBlur(gaus_inv,(5,5),0)
 
 	            #flipping the image 
-				gaus=cv2.flip(gaus,1)
+				gaus=cv2.flip(gaus_opening,1)
 
 				#resizing the image to get a fixed dimension
 				gausr=cv2.resize(gaus,(100,45))
@@ -168,6 +211,17 @@ def eyes():
 
 			cn2,contours2,hierarchy2=cv2.findContours(gaus_opening,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
 			cv2.drawContours(cropped2,contours2,-1,(0,255,0),1)
+			global s
+
+			if (s==0 and len(contours2)==0 and len(contours)==0 and f==0) or(s==0 and len(contours)==0 and ew==0 and f==0) or (s==0 and len(contours2)==0 and ew1==0 and f==0) or (ew==0 and ew1==0) :
+				s=time.time()
+			if (len(contours)==0 and len(contours2)==0 and f==0) or(f==0 and len(contours)==0 and ew==0) or (f==0 and len(contours2)==0 and ew1==0) or (ew==0 and ew1==0):
+				x=time.time()-s
+				if x > 2:
+					DisplayWarning("EYES NOT DETECTED")
+				
+			if len(contours)!=0 or len(contours2)!=0:
+				s=0
 			
 			if len(contours)>0:
 				cnt=contours[0]
@@ -176,21 +230,14 @@ def eyes():
 			if len(contours2)>0:
 				cnt=contours2[0]
 				x1,y1=centroid(cnt,"right eye")
-			
-
-
-	    
-			  
-
-
-		
 	        
 	        #showing them beside each other
 			numpy_horizontal=np.hstack((eyes[0],eyes[1]))
 			cv2.imshow('both eyes',numpy_horizontal)
 
 		if callibration == True:
-			
+			global eye_coordinates_left_length
+			global eye_coordinates_right_length
 			global state_left
 
 			a= win32api.GetKeyState(0x01)
@@ -199,10 +246,18 @@ def eyes():
 				if a < 0:
 					if(x or y):
 						eye_coordinates_left.append([x,y])
+						eye_coordinates_left_length= len(eye_coordinates_left)
 					if(x1 or y1):
 						eye_coordinates_right.append([x1,y1])
+						eye_coordinates_right_length = len(eye_coordinates_right)
 			#print(eye_coordinates_left)
 			#print(eye_coordinates_right)
+
+		if callibration==False:
+			if([x,y]):
+				callt.calltest(left_syn0,left_syn1,left_s,left_b,left_u,([x,y]),"left")
+			if([x1,y1]):
+				callt.calltest(right_syn0,right_syn1,right_s,right_b,right_u,([x1,y1]),"right")
 
 		cv2.imshow('frame',frame)
 		
@@ -210,5 +265,5 @@ def eyes():
 		if cv2.waitKey(1) & 0xFF==ord('q'):
 			break
 
-
+eyes()
 

@@ -10,8 +10,8 @@ def callibration(x,y):
 	y=y/u
 	np.random.seed(2)
 	b=np.random.randn(1)
-	syn0=2*np.random.random((2,8))-b
-	syn1=2*np.random.random((8,2))-b
+	syn0=2*np.random.random((2,len(x)))-b
+	syn1=2*np.random.random((len(x),2))-b
 	for i in range(1,50000):
 		l0=x
 		l1=sig.sigmoid(np.dot(l0,syn0))

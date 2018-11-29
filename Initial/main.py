@@ -5,15 +5,22 @@ import mouse as mou
 import interface as inte
 global m
 import haar
+import callibration as cal
+
 
 def firstjob(worker):
 	global m
-	m=mou.mouse()
+	m,n=mou.mouse()
+	fp=open("data.txt","w")
+	fp.write('{0}\n {1}\n {2}\n {3}\n'.format(haar.eye_coordinates_left, m , haar.eye_coordinates_right,n))
+	fp.close()
+	print("\n\n\t\t\t         ..... TRAINING ....\n\n\n")
+	haar.left_syn0,haar.left_syn1,haar.left_s,haar.left_b,haar.left_u=cal.callibration(haar.eye_coordinates_left,m)
+	haar.right_syn0,haar.right_syn1,haar.right_s,haar.right_b,haar.right_u=cal.callibration(haar.eye_coordinates_right,n)
+	print("Training - Done!")
 	haar.callibration=False
-	print("\nLeft eye coordinates \n", haar.eye_coordinates_left)
+
 	
-	print("\nright eye coordinates\n", haar.eye_coordinates_right)
-	print("\nscreen coordinates\n", m)
 
 
 	
@@ -28,13 +35,7 @@ def threader():
 
 		worker=q.get()
 		firstjob(worker)
-		q.task_done()
-		
-
-	
-
-
-	
+		q.task_done()	
 def threader2():
 	while True:
 		worker2=q.get()
